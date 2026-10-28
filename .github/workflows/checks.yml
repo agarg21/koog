@@ -8,10 +8,7 @@
 name: Checks
 
 on:
-  push:
-    branches: [ "main", "develop" ]
-  pull_request:
-  workflow_dispatch:
+  workflow_dispatch:  # fork-only measurement harness (agarg21/koog)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -25,24 +22,13 @@ env:
 
 jobs:
   changes:
+    # fork-only: dispatch has no PR diff; emulate a source-only PR
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     outputs:
-      koog-src: ${{ steps.filter.outputs.koog-src_any_modified }}
-      docs: ${{ steps.filter.outputs.docs_any_modified }}
+      koog-src: 'true'
+      docs: 'false'
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: tj-actions/changed-files@7dee1b0c1557f278e5c7dc244927139d78c0e22a # v47.0.4
-        name: Check changed files
-        id: filter
-        with:
-          write_output_files: 'true'
-          files_yaml_from_source_file: .github/file-filters.yml
-
-      - run: .github/scripts/print_changed_files.sh
-        name: 'Print changed files'
+      - run: echo "koog-src=true docs=false (measurement harness)"
 
   compilation:
     needs: changes
@@ -148,7 +134,7 @@ jobs:
           ./gradlew jvmTest :koverBinaryReport --continue
 
       - name: Check Split Packages
-        if: matrix.os == 'ubuntu-latest' && github.event.pull_request.draft == false
+        if: matrix.os == 'ubuntu-latest'
         run: |-
           ./gradlew jvmJar && ./gradlew checkSplitPackages
 
@@ -157,7 +143,7 @@ jobs:
         run: ./gradlew jvmTest --continue
 
       - name: iosSimulatorArm64Test with Gradle Wrapper
-        if: matrix.os == 'macos-latest' && github.event.pull_request.draft == false && github.repository == 'jetbrains/koog'
+        if: matrix.os == 'macos-latest' && true
         run: ./gradlew linkIosSimulatorArm64 iosSimulatorArm64Test --continue
 
       - name: Archive coverage data
