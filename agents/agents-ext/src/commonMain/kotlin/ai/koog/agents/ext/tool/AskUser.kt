@@ -30,3 +30,5 @@ public object AskUser : SimpleTool<AskUser.Args>(
         return readln()
     }
 }
+
+// measurement marker (fork-only): emulates a small source PR
